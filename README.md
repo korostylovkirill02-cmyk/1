@@ -98,22 +98,64 @@ IT чат,45300,https://t.me/it_chat_ru
 
 ## Решение проблем
 
+## Решение проблем
+
 ### При блокировках и антиботе
 
-1. **Увеличьте задержки:**
+**⚠️ ВАЖНО: Если вы видите ошибку "Требуется авторизация - 429"**
+
+TGStat может блокировать автоматические запросы. Вот способы решения:
+
+1. **Увеличьте задержки до 10+ секунд:**
    ```bash
-   python tgstat_parser.py --delay 2.0 --url "..." --pages 2
+   python tgstat_parser.py --delay 10.0 --url "..." --pages 1
    ```
 
-2. **Уменьшите количество страниц:**
+2. **Используйте прокси:**
+   ```bash
+   # Через параметр
+   python tgstat_parser.py --proxy "http://proxy:port" --url "..."
+   
+   # Через .env файл
+   echo "PROXY=http://proxy:port" > .env
+   python tgstat_parser.py --url "..."
+   ```
+
+3. **Попробуйте в разное время:**
+   - Утром или поздним вечером (меньше нагрузки)
+   - В выходные дни
+
+4. **Уменьшите количество страниц:**
    ```bash
    python tgstat_parser.py --pages 1 --url "..."
    ```
 
-3. **Включите прокси:**
-   ```bash
-   python tgstat_parser.py --proxy "http://proxy:port" --url "..."
-   ```
+5. **Альтернативные подходы:**
+   - Используйте VPN
+   - Смените IP адрес
+   - Попробуйте мобильный интернет
+
+### ⚡ Быстрое тестирование работоспособности
+
+Если скрипт не работает, сначала проверьте:
+
+```bash
+# Тест с минимальными настройками
+python tgstat_parser.py --self-check --delay 15.0
+
+# Если не работает, попробуйте с прокси
+python tgstat_parser.py --self-check --delay 15.0 --proxy "http://your-proxy:port"
+```
+
+### При ошибках 429 (Rate Limit)
+
+```bash
+# Максимальные задержки
+python tgstat_parser.py --delay 20.0 --pages 1 --url "..."
+
+# С прокси и большими задержками
+python tgstat_parser.py --delay 20.0 --pages 1 --proxy "http://proxy:port" --url "..."
+```
 
 ### При ошибках установки
 
