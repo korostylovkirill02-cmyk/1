@@ -47,6 +47,9 @@ class TGStatParser:
         if proxy:
             self.session.proxies = {"http": proxy, "https": proxy}
             
+        # Настройка логирования
+        self.setup_logging()
+        
         # Предзапрос на главную страницу для получения куков
         try:
             main_response = self.session.get("https://tgstat.ru/", 
@@ -57,9 +60,6 @@ class TGStatParser:
             time.sleep(2)  # Небольшая пауза
         except Exception as e:
             self.logger.warning(f"⚠️ Не удалось получить куки: {e}")
-            
-        # Настройка логирования
-        self.setup_logging()
         
     def setup_logging(self):
         """Настройка логирования в файл и консоль"""
