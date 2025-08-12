@@ -36,9 +36,12 @@ class TGStatParser:
         self.channels_data: Set[Tuple[str, int, str]] = set()  # title, subscribers, link
         self.chats_data: Set[Tuple[str, int, str]] = set()  # title, subscribers, link
         
-        # Настройка прокси
-        if proxy:
-            self.session.proxies = {"http": proxy, "https": proxy}
+        # Настройка сессии с дополнительными куками
+        self.session.cookies.update({
+            "lang": "ru",
+            "_ga": f"GA1.2.{random.randint(100000000, 999999999)}.{random.randint(1600000000, 1700000000)}",
+            "_gid": f"GA1.2.{random.randint(100000000, 999999999)}.{random.randint(1600000000, 1700000000)}"
+        })
             
         # Настройка логирования
         self.setup_logging()
