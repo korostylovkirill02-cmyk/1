@@ -1,0 +1,6 @@
+curl_cffi==0.6.2
+selectolax==0.3.17
+python-dotenv==1.0.1
+argparse>=1.4.0
+fake-useragent==1.4.0
+tenacity==8.2.3
