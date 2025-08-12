@@ -102,7 +102,7 @@ class TGStatParser:
             if response.status_code == 429:
                 self.logger.warning("⚠️ Rate limit (429), увеличиваем задержку...")
                 time.sleep(5 + random.uniform(0, 5))
-                raise requests.RequestException("Rate limit exceeded")
+                raise Exception("Rate limit exceeded")
             
             if response.status_code not in [200, 404]:
                 self.logger.error(f"❌ HTTP {response.status_code}: {url}")
