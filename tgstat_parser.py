@@ -187,56 +187,80 @@ class TGStatParser:
                 
             parser = HTMLParser(response.text)
             
-            # Ищем карточки каналов/чатов
-            cards = parser.css('.card, .channel-card, .chat-card, .peer-card')
+            # Ищем карточки каналов/чатов - обновленные селекторы для TGStat
+            cards = parser.css('.peer-mini, .peer, .peer-item, .peer-row, .peer-card')
             if not cards:
                 # Альтернативные селекторы
-                cards = parser.css('[data-peer-id], .peer-item, .rating-item')
+                cards = parser.css('tr[data-peer-id], .channel-row, .chat-row')
                 
             items = []
             for card in cards:
                 try:
-                    # Извлечение названия
-                    title_elem = card.css_first('.card-title, .peer-title, .channel-title, h3, h4, .title')
-                    if not title_elem:
-                        title_elem = card.css_first('a[href*="/channel/"], a[href*="/chat/"]')
+                    # Извлечение названия - улучшенная логика
+                    title = ""
+                    title_elem = card.css_first('a.peer-name, .peer-name a, .peer-title, .peer-name')
+                    if title_elem:
+                        title = title_elem.text(strip=True)
                     
-                    if not title_elem:
-                        continue
-                        
-                    title = title_elem.text(strip=True)
+                    # Альтернативный поиск названия
+                    if not title:
+                        title_elem = card.css_first('td:first-child a, .name a')
+                        if title_elem:
+                            title = title_elem.text(strip=True)
+                    
                     if not title:
                         continue
                     
                     # Извлечение количества подписчиков
                     subscribers = 0
-                    subscribers_elem = card.css_first('.subscribers, .members, .peer-subscribers, .count')
+                    # Ищем элемент с подписчиками
+                    subscribers_elem = card.css_first('.peer-members, .subscribers, .members, td.text-end')
                     if subscribers_elem:
                         subscribers_text = subscribers_elem.text(strip=True)
                         subscribers = self.normalize_subscribers(subscribers_text)
                     
                     # Извлечение ссылки
                     tgstat_link = ""
-                    link_elem = card.css_first('a[href]')
-                    if link_elem:
-                        href = link_elem.attributes.get('href', '')
-                        if href.startswith('/'):
-                            tgstat_link = urljoin(self.base_url, href)
-                        else:
-                            tgstat_link = href
+                    telegram_link = ""
                     
-                    # Извлекаем Telegram ссылку
-                    telegram_link = self.extract_telegram_link(card.html, tgstat_link)
+                    # Сначала ищем прямую ссылку на telegram
+                    tg_link_elem = card.css_first('a[href*="t.me"]')
+                    if tg_link_elem:
+                        telegram_link = tg_link_elem.attributes.get('href', '')
+                    
+                    # Если нет прямой ссылки, ищем внутреннюю ссылку на TGStat
                     if not telegram_link:
-                        telegram_link = tgstat_link
+                        link_elem = card.css_first('a[href*="/channel/"], a[href*="/chat/"], .peer-name')
+                        if link_elem:
+                            href = link_elem.attributes.get('href', '')
+                            if href.startswith('/'):
+                                tgstat_link = urljoin(self.base_url, href)
+                            else:
+                                tgstat_link = href
                     
-                    # Определяем тип (канал или чат) по URL или содержимому
-                    is_channel = "/channel/" in tgstat_link or "канал" in title.lower()
+                    # Попытка извлечь username из различных источников
+                    if not telegram_link and tgstat_link:
+                        # Извлекаем из URL TGStat
+                        username_match = re.search(r'/(channel|chat)/([^/]+)', tgstat_link)
+                        if username_match:
+                            username = username_match.group(2)
+                            telegram_link = f"https://t.me/{username}"
+                    
+                    # Финальная ссылка
+                    final_link = telegram_link or f"{tgstat_link} (tgstat)" if tgstat_link else ""
+                    
+                    if not final_link:
+                        continue
+                    
+                    # Определяем тип по URL или содержимому
+                    is_channel = True  # По умолчанию канал
+                    if "/chat/" in (tgstat_link or "") or "чат" in title.lower():
+                        is_channel = False
                     
                     item = {
                         'title': title,
                         'subscribers': subscribers,
-                        'link': telegram_link,
+                        'link': final_link,
                         'type': 'channel' if is_channel else 'chat'
                     }
                     items.append(item)
@@ -246,7 +270,7 @@ class TGStatParser:
                     continue
             
             # Проверяем наличие следующей страницы
-            has_next = bool(parser.css('a[href*="page="]:contains("Следующая"), .pagination .next, a.next'))
+            has_next = bool(parser.css('.pagination .page-item:last-child:not(.disabled), a[rel="next"], .next-page'))
             
             self.logger.info(f"✅ Найдено {len(items)} элементов на странице")
             return items, has_next
