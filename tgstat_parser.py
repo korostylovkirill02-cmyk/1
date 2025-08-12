@@ -265,7 +265,32 @@ class TGStatParser:
                     continue
             
             # Проверяем наличие следующей страницы
-            has_next = bool(parser.css('.pagination .page-item:last-child:not(.disabled), a[rel="next"], .next-page'))
+            # Вместо поиска кнопки "следующая", проверяем количество найденных элементов
+            # Если нашли 100 элементов (стандартное количество на странице), скорее всего есть еще страницы
+            has_next = len(items) >= 100 or bool(parser.css('a[href*="page="]'))
+            
+            # Дополнительная проверка - ищем номера страниц больше текущего
+            current_page = 1
+            try:
+                current_page = int(re.search(r'page=(\d+)', url).group(1)) if 'page=' in url else 1
+            except:
+                current_page = 1
+                
+            # Ищем ссылки на страницы больше текущей
+            page_links = parser.css('a[href*="page="]')
+            max_page_found = current_page
+            for link in page_links:
+                href = link.attributes.get('href', '')
+                page_match = re.search(r'page=(\d+)', href)
+                if page_match:
+                    page_num = int(page_match.group(1))
+                    max_page_found = max(max_page_found, page_num)
+            
+            # Если есть ссылки на страницы больше текущей, значит есть следующие страницы
+            if max_page_found > current_page:
+                has_next = True
+            elif len(items) < 50:  # Если элементов меньше 50, скорее всего это последняя страница
+                has_next = False
             
             self.logger.info(f"✅ Найдено {len(items)} элементов на странице")
             return items, has_next
