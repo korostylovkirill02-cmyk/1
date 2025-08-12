@@ -92,6 +92,12 @@ class TGStatParser:
         """Случайная задержка с джиттером"""
         delay = self.delay_base + random.uniform(0, self.delay_jitter)
         time.sleep(delay)
+        
+    def long_delay(self):
+        """Длинная задержка при обнаружении блокировки"""
+        delay = 10 + random.uniform(0, 10)
+        self.logger.info(f"⏰ Длинная пауза: {delay:.1f} сек...")
+        time.sleep(delay)
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10),
            retry=retry_if_exception_type((Exception,)))
