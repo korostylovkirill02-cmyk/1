@@ -187,12 +187,35 @@ class TGStatParser:
                 
             parser = HTMLParser(response.text)
             
+            # Отладочная информация
+            self.logger.info(f"🔍 Отладка: размер HTML - {len(response.text)} символов")
+            
             # Ищем карточки каналов/чатов - правильные селекторы для TGStat
             cards = parser.css('div[class*="peer"], div[class*="channel"], div[class*="rating"]')
+            self.logger.info(f"🔍 Найдено карточек с базовыми селекторами: {len(cards)}")
+            
+            if not cards:
+                # Альтернативные селекторы
+                cards = parser.css('div')  # Все div-ы для отладки
+                self.logger.info(f"🔍 Всего div элементов: {len(cards)}")
+                
+                # Ищем div-ы с ссылками на каналы
+                cards_with_links = []
+                for div in cards:
+                    channel_links = div.css('a[href*="/channel/"], a[href*="/chat/"]')
+                    if channel_links:
+                        cards_with_links.append(div)
+                
+                cards = cards_with_links[:100]  # Ограничиваем до 100
+                self.logger.info(f"🔍 Найдено div-ов со ссылками на каналы: {len(cards)}")
                 
             items = []
-            for card in cards:
+            for i, card in enumerate(cards):
                 try:
+                    # Отладочная информация для первых 3 карточек
+                    if i < 3:
+                        self.logger.info(f"🔍 Карточка {i+1}: {card.html[:200]}...")
+                    
                     # Извлечение названия и ссылки
                     title = ""
                     tgstat_link = ""
@@ -201,6 +224,8 @@ class TGStatParser:
                     # Ищем ссылку на канал/чат внутри карточки
                     channel_link = card.css_first('a[href*="/channel/"], a[href*="/chat/"]')
                     if not channel_link:
+                        if i < 3:  # Отладка для первых карточек
+                            self.logger.warning(f"🔍 Карточка {i+1}: не найдена ссылка на канал")
                         continue
                         
                     # Получаем название и ссылку
