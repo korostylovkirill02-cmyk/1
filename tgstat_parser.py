@@ -206,6 +206,11 @@ class TGStatParser:
             if "404" in response.text or "не найден" in response.text.lower():
                 self.logger.error("❌ Страница не найдена!")
                 return [], False
+                
+            if "429" in response.text or "авторизации" in response.text.lower():
+                self.logger.error("❌ Требуется авторизация или превышен лимит запросов!")
+                self.logger.error("💡 Попробуйте: увеличить задержку --delay 2.0 или использовать прокси")
+                return [], False
             
             # Ищем карточки каналов/чатов - правильные селекторы для TGStat
             cards = parser.css('div[class*="peer"], div[class*="channel"], div[class*="rating"]')
