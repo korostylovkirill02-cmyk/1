@@ -508,7 +508,16 @@ def main():
         tgstat.save_to_csv(args.outdir)
         sys.exit(0)
     except Exception as e:
-        tgstat.logger.error(f"❌ Критическая ошибка: {e}")
+        if "429" in str(e) or "авторизации" in str(e).lower():
+            print(f"\n❌ TGStat заблокировал запросы!")
+            print(f"💡 РЕШЕНИЯ:")
+            print(f"   1. Увеличьте задержку: --delay 15.0")
+            print(f"   2. Используйте прокси: --proxy 'http://proxy:port'")
+            print(f"   3. Уменьшите страницы: --pages 1")
+            print(f"   4. Попробуйте позже или с другого IP")
+            print(f"   5. Используйте VPN")
+        else:
+            tgstat.logger.error(f"❌ Критическая ошибка: {e}")
         sys.exit(1)
 
 
