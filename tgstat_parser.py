@@ -190,6 +190,19 @@ class TGStatParser:
             # Отладочная информация
             self.logger.info(f"🔍 Отладка: размер HTML - {len(response.text)} символов")
             
+            # Сохраняем HTML для отладки (только первые 2000 символов)
+            html_preview = response.text[:2000]
+            self.logger.info(f"🔍 HTML превью: {html_preview}")
+            
+            # Проверяем наличие капчи или блокировки
+            if "captcha" in response.text.lower() or "проверка" in response.text.lower():
+                self.logger.error("❌ Обнаружена капча или проверка!")
+                return [], False
+                
+            if "404" in response.text or "не найден" in response.text.lower():
+                self.logger.error("❌ Страница не найдена!")
+                return [], False
+            
             # Ищем карточки каналов/чатов - правильные селекторы для TGStat
             cards = parser.css('div[class*="peer"], div[class*="channel"], div[class*="rating"]')
             self.logger.info(f"🔍 Найдено карточек с базовыми селекторами: {len(cards)}")
