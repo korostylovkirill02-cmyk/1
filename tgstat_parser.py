@@ -42,6 +42,21 @@ class TGStatParser:
             "_ga": f"GA1.2.{random.randint(100000000, 999999999)}.{random.randint(1600000000, 1700000000)}",
             "_gid": f"GA1.2.{random.randint(100000000, 999999999)}.{random.randint(1600000000, 1700000000)}"
         })
+        
+        # Настройка прокси
+        if proxy:
+            self.session.proxies = {"http": proxy, "https": proxy}
+            
+        # Предзапрос на главную страницу для получения куков
+        try:
+            main_response = self.session.get("https://tgstat.ru/", 
+                                           headers=self.get_random_headers(), 
+                                           timeout=10)
+            if main_response.status_code == 200:
+                self.logger.info("✅ Получены куки с главной страницы")
+            time.sleep(2)  # Небольшая пауза
+        except Exception as e:
+            self.logger.warning(f"⚠️ Не удалось получить куки: {e}")
             
         # Настройка логирования
         self.setup_logging()
