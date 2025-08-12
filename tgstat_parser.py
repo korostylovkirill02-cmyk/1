@@ -204,8 +204,14 @@ class TGStatParser:
                         continue
                         
                     # Получаем название и ссылку
-                    title = channel_link.text(strip=True)
+                    title_raw = channel_link.text(strip=True)
                     href = channel_link.attributes.get('href', '')
+                    
+                    # Очищаем название от лишней информации
+                    # Убираем всё после цифр подписчиков
+                    title = re.split(r'\d+[\d\s]*подписчик', title_raw)[0].strip()
+                    # Убираем категории типа "Новости и СМИ"
+                    title = re.split(r'[А-Я][а-я]+ и [А-Я][А-Я]+$', title)[0].strip()
                     
                     if not title or not href:
                         continue
